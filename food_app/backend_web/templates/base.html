@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, shrink-to-fit=no">
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
+    <link rel="stylesheet" href="static/styles.css">
+    <title>{{title}}</title>
+</head>
+<body>
+    <nav class="navbar navbar-expand-md navbar-dark bg-dark nav nav-tabs">
+        <a class="btn noHover navbar-brand" href="{{ url_for('index')}}">Gourmet Fast</a>
+        <div class="Menu-Buttons">
+            <a class="btn btn-dark {% if active_item == 'home' %}active{% endif %}" href='{{ url_for("index")}}'>Home</a>
+            {% if current_user.is_authenticated %}
+            <a class="btn btn-dark {% if active_item == 'Search' %}active{% endif %}" href='{{ url_for("search")}}'>Search</a>
+            <a class="btn btn-dark {% if active_item == 'About' %}active{% endif %}" href='#About'>View_History</a>
+            {% endif %}
+        </div>
+    {% if current_user.is_authenticated %}
+        <div class="rightwards">
+            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href="{{ url_for('log_out_page') }}">Log Out</a>
+            <a class="btn btn-dark {% if active_item == 'Checkout' %}active{% endif %}" href="{{ url_for('checkout') }}">Check Out</a>
+        </div>
+    {% else %}
+        <div class='rightwards'>
+            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href='{{ url_for("login_page")}}'>Login Page</a>
+            <a class="btn btn-dark {% if active_item == 'Register' %}active{% endif %}" href='{{ url_for("register_page")}}'>Register</a>
+        </div>
+    {% endif %}
+    </nav>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="alert alert-{{ category }}">
+                    <button type="button" class='m1-2 mb-1 close' data-dismiss="alert" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </button>
+                    {{ message}}
+                </div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+    {% block content %}
+
+    {% endblock %}
+</body>
+</html>
