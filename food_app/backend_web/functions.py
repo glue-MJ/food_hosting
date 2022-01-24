@@ -5,7 +5,7 @@ def query_sql(PATH_SQL: str, fetch: bool):
         cur = conn.execute(PATH_SQL)
         cur.execute(PATH_SQL)
         if fetch:
-            return cur.fetchall()
+            return cur.fetchone()
         conn.commit()
     return 0
 
