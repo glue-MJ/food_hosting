@@ -1,4 +1,20 @@
-from backend_web import sql, os, UserMixin, dataclass, functions
+from backend_web import sql, os, UserMixin, dataclass, functions, FlaskForm
+
+class InitializeDataBase(object):
+    def __init__(self):
+        self.path = os.path.join(os.getcwd(), "storage.db")
+
+    def activate(self):
+        from backend_web import functions
+        PATH_SQL = self.path
+        functions.initialize_customers(PATH_SQL)
+        functions.initialize_products(PATH_SQL)
+        functions.initialize_stall(PATH_SQL)
+        functions.initalize_order(PATH_SQL)
+        functions.initialize_track(PATH_SQL)
+
+    def __repr__(self):
+        return super().__repr__()
 
 @dataclass
 class Customers(UserMixin):
@@ -15,3 +31,11 @@ class Customers(UserMixin):
         data = functions.query_sql(f"SELECT FROM CUSTOMERS WHERE ID = {id_};", True)
         Cus_Id, Name, Password, Email, Phone, Credit_Card = data
         return cls(id_, Name, Password, Email, Phone, Credit_Card)
+
+    def register(self):
+        data = functions.query_sql(f"INSERT INTO CUSTOMERS (ID_CUSTOMERS, NAME, PASSWORD, EMAIL, PHONE, CREDIT_CARD) VALUES {self.Cus_ID, self.Name, self.Password, self.Email, self.Phone, self.Credit_Card}", False)
+        return self
+
+    def is_authenticated(self):
+        return super().is_authenticated
+
