@@ -1,4 +1,6 @@
 from backend_web import os, load_dotenv, Flask, render_template, LoginManager
+from backend_web import models as mdls
+from backend_web import functions as func
 
 load_dotenv(os.path.join(os.getcwd(),".env"))
 
@@ -7,9 +9,9 @@ app = Flask(__name__, static_url_path="/static")
 login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 
-# @login_manager.user_loader
-# def load_user(user_id):
-#     return 0
+@login_manager.user_loader
+def load_user(user_id):
+    return mdls.Customers.retrieve_person(user_id)
 
 # HOME PAGE
 @app.route("/")

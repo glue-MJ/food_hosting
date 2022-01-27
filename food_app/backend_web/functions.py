@@ -1,9 +1,9 @@
 from backend_web import sql, pd
 
-def query_sql(PATH_SQL: str, fetch: bool):
+def query_sql(PATH_SQL: str, Query: str, fetch: bool):
     with sql.connect(PATH_SQL) as conn:
         cur = conn.execute(PATH_SQL)
-        cur.execute(PATH_SQL)
+        cur.execute(Query)
         if fetch:
             return cur.fetchone()
         conn.commit()
@@ -26,7 +26,8 @@ def initialize_products(PATH_SQL: str):
             ID_PRODUCT INTEGER PRIMARY KEY,
             NAME TEXT,
             DESCRIPTION TEXT,
-            ID_STALL
+            ID_STALL INTEGER
+            PRICE REAL
         );
         """)
         conn.commit()
@@ -83,7 +84,18 @@ def initialize_track(PATH_SQL: str):
         cur.execute("""
         CREATE TABLE IF NOT EXISTS TRACK(
             ID_BOX INTEGER PRIMARY KEY,
-            ID_ORDER INTEGER
+            ID_ORDER INTEGER NULL,
+            ID_STALL INTEGER,
+            STATUS TEXT
         );
         """)
     return 0
+
+def r_attr(self):  # RETURNS THE VALUES OF AN INSTANCE VARIABLES
+    return (*vars(self).values(),)
+
+def r_col(self):  # RETURNS THE PROPERTIES OF A CLASS OR INSTANCE
+    if type(self) == type(type):  # CHECK IF ITS AN CLASS OR INSTANCE OF A CLASS
+        tup = range(self.__init__.__code__.co_argcount - 1)
+        self = self(*tup)
+    return (*self.__dict__,)

@@ -10,5 +10,5 @@ from flask_wtf import FlaskForm
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
 from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
 from dotenv import load_dotenv
-from backend_web import functions as func
-from backend_web import models as mdls
+
+path_sql = os.path.join(os.getcwd(), "storage.db")
