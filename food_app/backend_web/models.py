@@ -1,5 +1,9 @@
+import email
+from unicodedata import name
 from backend_web import sql, os, UserMixin, dataclass, FlaskForm, pd
 from backend_web import functions as func
+from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
+from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
 
 path_sql = os.path.join(os.getcwd(), "storage.db")
 
@@ -95,7 +99,7 @@ class Products(object):
 class Orders(object):
     ID_ORDER: int
     ID_PRODUCT: int
-    STATUS: str
+    STATUS: str    # PENDING, PREPARING, READY, COLLECTED
     SPECIAL_REQUESTS: str
     PHONE: str
     ID_CUSTOMER: int
@@ -118,15 +122,21 @@ class Track(object):
     ID_BOX: int
     ID_ORDER: int
     ID_STALL: int
-    STATUS: str
+    STATUS: str    # UNOCCUPIED, OCCUPIED
 
     @staticmethod
-    def ALLOCATE(ID_ORDER: int, ID_STALL: int):
-        txt = f'SELECT ID_BOX FROM TRACK WHERE STATUS = "UNOCCUPIED" LIMIT 1'
+    def REGISTER(ID_STALL: int):
+        txt = f'INSERT INTO TRACK ID_BOX VALUES (NULL, NULL, {ID_STALL}, "UNOCCUPIED")'
+
+    @staticmethod
+    def ALLOCATE(ID_STALL: int):
+        txt = f'SELECT ID_BOX FROM TRACK WHERE STATUS = "UNOCCUPIED" AND STALL_ID = {ID_STALL} LIMIT 1 '
         data = func.query_sql(path_sql, txt, True)
-        if data == None:
+        txt_f = f'SELECT ID_ORDER FROM ORDERS WHERE STATUS = "READY" AND STALL_ID = {ID_STALL} LIMIT 1'
+        ID_ORDER = func.query_sql(path_sql, txt_f, True)
+        if data == None or ID_ORDER == None:
             return -1
-        txt_2 = f'UPDATE TRACK SET ID_ORDER = {ID_ORDER}, ID_STALL = {ID_STALL}, STATUS = "OCCUPIED" WHERE ID_BOX = {data[0]}'
+        txt_2 = f'UPDATE TRACK SET ID_ORDER = {ID_ORDER[0]}, STATUS = "OCCUPIED" WHERE ID_BOX = {data[0]}'
         func.query_sql(path_sql, txt_2, False)
         return 0
 
@@ -135,3 +145,33 @@ class Track(object):
         txt = f'UPDATE STATUS = "UNOCCUPIED" WHERE ID_BOX = {ID_BOX}'
         func.query_sql(path_sql, txt, False)
         return 0
+
+class SearchForm(FlaskForm):
+    SearchValue = StringField(label="Type Something Here", validators=[DataRequired()])
+    submit = SubmitField(label="Search 🔍")
+
+class RegisterForm(FlaskForm):
+    Name = StringField(label="UserName", validators=[DataRequired()])
+    Phone = StringField(label="Phone Number", validators=[DataRequired()])
+    Email = EmailField(label="Email", validators=[DataRequired(), Email()])
+    Credit_Card = StringField(label="Credit Card Information", validators=[DataRequired(), Length(min="16", max="16", message="Enter a valid credit card")])
+    Password = PasswordField(label="Password", validators=[DataRequired()])
+    Password_1 = PasswordField(label="Password", validators=[DataRequired()])
+    Submit = SubmitField(label="Submit")
+
+    def validate_Name(self, Name: str):
+        res = func.query_sql(path_sql, f"SELECT ID_CUSTOMERS FROM CUSTOMERS WHERE NAME = {Name}", True)
+        if not res:
+            raise ValidationError("UserName Already Exists...")
+        return 0
+
+class LoginForm(FlaskForm):
+    Name = StringField(label="UserName", validators=[DataRequired()])
+    Password = PasswordField(label="Password", validators=[DataRequired()])
+    Submit = SubmitField(label="Login")
+
+class PurchaseForm(FlaskForm):
+    submit = SubmitField(label="Purchase")
+
+class CheckOutForm(FlaskForm):
+    submit = SubmitField(label="CheckOut")

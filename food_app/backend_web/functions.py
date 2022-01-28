@@ -85,7 +85,7 @@ def initialize_track(PATH_SQL: str):
         CREATE TABLE IF NOT EXISTS TRACK(
             ID_BOX INTEGER PRIMARY KEY,
             ID_ORDER INTEGER NULL,
-            ID_STALL INTEGER,
+            ID_STALL INTEGER NULL,
             STATUS TEXT
         );
         """)
