@@ -36,6 +36,12 @@ class Customers(UserMixin):
         data = func.query_sql(path_sql, f"SELECT * FROM CUSTOMERS WHERE ID = {id_};", True)
         return cls(*data)
 
+    @classmethod
+    def signin(cls: object, name: str, password: str):
+        txt = f'SELECT * FROM CUSTOMERS WHERE NAME = {name} AND PASSWORD = {password} LIMIT 1'
+        data = func.query_sql(path_sql, txt, True)
+        return cls(*data)
+
     def register(self):
         self.Cus_Id = "NULL"
         func.query_sql(path_sql, f"INSERT INTO CUSTOMERS (ID_CUSTOMERS, NAME, PASSWORD, EMAIL, PHONE, CREDIT_CARD) VALUES {self.Cus_ID, self.Name, self.Password, self.Email, self.Phone, self.Credit_Card}", False)
@@ -43,6 +49,9 @@ class Customers(UserMixin):
 
     def is_authenticated(self):
         return super().is_authenticated
+
+    def get_id(self):
+        return self.Cus_Id
 
 @dataclass
 class Stall(object):
@@ -99,7 +108,7 @@ class Products(object):
 class Orders(object):
     ID_ORDER: int
     ID_PRODUCT: int
-    STATUS: str    # PENDING, PREPARING, READY, COLLECTED
+    STATUS: str    # CARTED, PENDING, PREPARING, READY, COLLECTED
     SPECIAL_REQUESTS: str
     PHONE: str
     ID_CUSTOMER: int
@@ -152,7 +161,7 @@ class SearchForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     Name = StringField(label="UserName", validators=[DataRequired()])
-    Phone = StringField(label="Phone Number", validators=[DataRequired()])
+    Phone = StringField(label="Phone Number", validators=[DataRequired(), Length(min=8, max=8)])
     Email = EmailField(label="Email", validators=[DataRequired(), Email()])
     Credit_Card = StringField(label="Credit Card Information", validators=[DataRequired(), Length(min="16", max="16", message="Enter a valid credit card")])
     Password = PasswordField(label="Password", validators=[DataRequired()])

@@ -1,0 +1,26 @@
+{% extends "base.html"}
+{% block content %}
+
+<form method="POST" class="form-register" style="color:white">
+    {{ form.hidden_tag() }}
+    {{ form.Search_Value(class="form-control", placeholder="Type Something Here")}}
+    {{ form.submit(class="btn btn-primary") }}
+</form>
+
+<br>
+
+<div>
+    {% for item in items %}
+    <div class="card" style="width: fit-content;">
+        <img class="card-img-top" src="url_for('static', filename='Food_BackGround.jpg')" alt="Card image cap">
+        <div class="card-body">
+            <h5 class="card-title">{{ item.NAME }}  @ S${{ item.PRICE }}</h5>
+            <p class="card-text">item.DESCRIPTION</p>
+            {{ form.hidden_tag() }}
+            <input id="Purchased-Item" name="Purchased-Item" type="hidden" value="{{ item.ID_PRODUCT }}">
+            <a>{{ purchase_form.submit(class='btn btn-primary')}}</a>
+        </div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

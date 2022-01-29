@@ -8,6 +8,7 @@ cd food_app
 cd backend_web
 echo FILES CREATED FOR THE WEBSITE
 powershell ls -File -recurse -exclude *pyc" | Select Name, FullName, Length"
+Powershell "../Scripts/activate"
 set FLASK_APP=app.py
 flask run
 goto end
