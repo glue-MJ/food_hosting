@@ -138,5 +138,4 @@ def NULL_FIRST(lst: list):
 def json_to_dic(path: str):
     import json
     with open(path) as file:
-        dic = json.load(file)
-    return dic
+        return json.load(file)

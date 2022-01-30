@@ -1,7 +1,9 @@
 from backend_web import sql, os, UserMixin, dataclass, FlaskForm, pd
 from backend_web import functions as func
+from flask import Flask
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
 from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
+from flask_wtf.file import FileField, FileRequired, FileAllowed
 import json
 
 path_sql = os.path.join(os.getcwd(), "storage.db")
@@ -96,7 +98,7 @@ class Products(object):
         if ID_PRODUCT:
             with open("products.json") as file:
                 dic = json.load(file)
-                dic = {**dic, {f'{ID_PRODUCT}':"Food_BackGround.jpg"}}
+                dic = {**dic, **{f'{ID_PRODUCT}':"Food_BackGround.jpg"}}
         return self
     
     @staticmethod
@@ -135,7 +137,7 @@ class Orders(object):
 
     @staticmethod
     def view_stall_orders(ID_Stall: int, STATUS = False):
-        txt = f'SELECT * FROM ORDERS WHERE ID_STALL = {ID_Stall}' + (f" AND STATUS = {STATUS}" * (STATUS))
+        txt = f'SELECT * FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_STALL = {ID_Stall}' + (f" AND STATUS = {STATUS}" * (STATUS))
         data = func.sql_tables(path_sql, txt)
         return data
 
@@ -154,8 +156,9 @@ class Orders(object):
 
     @staticmethod
     def view_orders(ID_Customer: int):
-        txt = f'SELECT ID_ORDER, NAME, PRICE, STATUS FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_CUSTOMER = {ID_Customer};'
+        txt = f'SELECT ID_ORDER, NAME, PRICE, STATUS, ID_STALL FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_CUSTOMER = {ID_Customer};'
         data = func.sql_tables(path_sql, txt)
+        data["COUNTER"] = [func.query_sql(path_sql, f'SELECT COUNT(ID_STALL) AS COUNTER FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE STATUS IN ("PENDING", "PREPARING") GROUP BY ID_STALL HAVING ID_STALL = {ID_STALL} LIMIT 1;', True)[0] for ID_STALL in data["ID_STALL"].values if ID_STALL]
         return data
 
     @staticmethod
@@ -257,7 +260,5 @@ class PurchaseForm(FlaskForm):
 class CheckOutForm(FlaskForm):
     submit = SubmitField(label="CheckOut")
 
-class UploadForm(FlaskForm):
-    ID = StringField(label="FOOD ID", validators=[DataRequired()])
-    photo = FileField(validators=[FileAllowed(photos, u'Image only!'), FileRequired(u'File was empty!')])
-    submit = SubmitField(u'Upload')
+class CancelForm(FlaskForm):
+    submit = SubmitField(label="Cancel Order")

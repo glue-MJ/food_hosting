@@ -14,7 +14,7 @@
 <div>
     {% for item in items.values %}
     <div class="card" style="width:50%; margin:0 auto; border: 4px solid darkblue;">
-        <img class="card-img-top" src="{{ url_for('static', filename='Food_BackGround.jpg') }}" alt="Card image cap">
+        <img class="card-img-top" src="../static/{{ item[4] }}" alt="Card image cap">
         <div class="card-body">
             <h5 class="card-title" style='color: black;'>{{ item[0] }}  @ S${{ item[1] }}</h5>
             <p class="card-text" style='color: black;'>{{ item[2] }}</p>

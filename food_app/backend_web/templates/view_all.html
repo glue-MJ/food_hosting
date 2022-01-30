@@ -3,13 +3,24 @@
 
 <div class="container">
     {% for item in items.values %}
-    <div class="container-fluid div-hover" style="border: 5px solid white; padding-bottom: 5px;">
-      <p style="text-align: center; border-bottom: 2px solid white;">Status: {{ item[3] }}</p>
+    <div class="container-fluid div-hover" style="border: 5px solid black; border-radius: 25px ;padding-bottom: 5px; width: 100%; background-color: white; color: black;">
+      <p style="text-align: center; border-bottom: 2px solid black;;">Status: {{ item[3] }}</p>
         <strong><h5>Order_ID: {{ item[0] }}</h5></strong>
-        <p>Item: {{ item[1] }}</p>
-        <p>Price: ${{ item[2] }}</p>
+        <br>
+        <p><strong>Item: </strong>{{ item[1] }}</p>
+        <p><strong>Price: $</strong>{{ item[2] }}</p>
+        <p><strong>Stall Name: </strong>{{ item[4] }}</p>
+        <p><strong>Waiting In Line: </strong>{{ item[5] }}</p>
+        {% if item[3] == "PENDING" %}
+          <div style="position: relative; display: inline; text-align: right;">
+            <form method="POST" class="form-register">
+              {{ cancel_form.hidden_tag() }}
+              <input id="Cancelled-Item" name="Cancelled-Item" type="hidden" value="{{ item[0] }}">
+              {{ cancel_form.submit(class='btn btn-outline-danger', style='width: 100%') }}
+            </form>
+          </div>
+        {% endif %}
       </div>  
     {% endfor %}
   </div>
-
 {% endblock %}

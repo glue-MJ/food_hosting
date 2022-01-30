@@ -1,8 +1,11 @@
 from backend_web import os, load_dotenv, Flask, render_template, LoginManager, login_user, logout_user, login_required, current_user, flash, url_for, redirect
 from backend_web import models as mdls
 from backend_web import functions as func
-from backend_web import login_required, request, QRcode, abort, pd, path_sql
+from backend_web import login_required, request, QRcode, abort, pd, path_sql, FlaskForm
 from flask_uploads import UploadSet, configure_uploads, IMAGES, patch_request_class
+from flask_wtf.file import FileField, FileRequired, FileAllowed
+from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
+from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
 import json
 
 load_dotenv(os.path.join(os.getcwd(),".env"))
@@ -20,6 +23,11 @@ patch_request_class(app)
 login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 QRcode(app)
+
+class UploadForm(FlaskForm):
+    ID = StringField(label="FOOD ID", validators=[DataRequired()])
+    photo = FileField(validators=[FileAllowed(photos, u'Image only!'), FileRequired(u'File was empty!')])
+    submit = SubmitField(u'Upload')
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -68,16 +76,21 @@ def register_page():
 def search():
     form = mdls.SearchForm()
     p_form = mdls.PurchaseForm()
+    dic = func.json_to_dic("products.json")
     if form.validate_on_submit() and request.method == "POST":
         data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]]
+        data["PNG_PATH"] = [dic.get(f'{idx}') for idx in data["ID_PRODUCT"].values]
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
     if p_form.validate_on_submit() and request.form.get("Purchased-Item"):
         data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]]
+        data["PNG_PATH"] = [dic.get(f'{idx}') for idx in data["ID_PRODUCT"].values]
         cart = mdls.Orders(0, request.form.get("Purchased-Item"), "CARTED", "NULL", current_user.Phone, current_user.Cus_Id)
         cart.new_order()
         flash("Added", category="success")
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
-    return render_template("search.html", active_item="Search", form=form, items=mdls.Products.query_food("")[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]], purchase_form=p_form)
+    data = mdls.Products.query_food("")[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]]
+    data["PNG_PATH"] = [dic.get(f'{idx}') for idx in data["ID_PRODUCT"].values]
+    return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
 
 @app.route("/checkout", methods=["GET", "POST"])
 @login_required
@@ -93,11 +106,15 @@ def checkout():
             return redirect(url_for("view_all"))
     return render_template("checkout.html", items=data, form=form, filled=filled, Aggregate=subtotal)
 
-@app.route("/view", methods=["GET"])
+@app.route("/view", methods=["GET", "POST"])
 @login_required
 def view_all():
+    cf = mdls.CancelForm()
     data = mdls.Orders.view_orders(current_user.Cus_Id)
-    return render_template("view_all.html", items=data)
+    if cf.validate_on_submit() and request.method == "POST" and request.form.get("Cancelled-Item"):
+        mdls.Orders.cancel_orders(request.form.get("Cancelled-Item"))
+        data = mdls.Orders.view_orders(current_user.Cus_Id)
+    return render_template("view_all.html", items=data, cancel_form=cf)
 
 @app.route("/qrcode/send/<orders_id>")
 def QR_CODES(orders_id: str):
@@ -105,14 +122,17 @@ def QR_CODES(orders_id: str):
 
 @app.route("/upload", methods=["GET", "POST"])
 def upload_file():
-    form = mdls.UploadForm()
+    form = UploadForm()
     if form.validate_on_submit():
-        with open("products.json") as file:
-            dic = json.load(file)
+        dic = func.json_to_dic("products.json")
+
+        if not dic.get(f'{form.ID.data}'):
             filename = photos.save(form.photo.data)
             file_url = photos.url(filename)
-            if dic.get(f'{form.ID.data}'):
-                dic[f'{form.ID.data}'] = f'{filename}'
+            dic[f'{form.ID.data}'] = f'{filename}'
+
+            with open("products.json", "w+") as file:
+                json.dump(dic, file, indent=2)
     else:
         file_url = None
     return render_template("upload.html", form=form, file_url=file_url)

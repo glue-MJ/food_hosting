@@ -6,7 +6,7 @@ Register Page
 
 {% block content %}
     <br>
-    <form method="POST" class="form-register" style="color:white; width: fit-content; display: inline-block;">
+    <form method="POST" class="form-register" style="color:white; width: 65%; display: block; margin:auto; border: 2px solid white; padding: 10px 10px 10px 10px;">
         {{ form.hidden_tag() }}
         <p>{{ form.Name.label() }}</p>
         {{ form.Name(class="form-control", placeholder="Username")}}
