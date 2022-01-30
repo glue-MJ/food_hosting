@@ -99,3 +99,32 @@ def r_col(self):  # RETURNS THE PROPERTIES OF A CLASS OR INSTANCE
         tup = range(self.__init__.__code__.co_argcount - 1)
         self = self(*tup)
     return (*self.__dict__,)
+
+def notify_new(email: str):
+    import os
+    import smtplib
+    import imghdr
+    from email.message import EmailMessage
+    from backend_web import load_dotenv
+
+    load_dotenv(os.path.join(os.getcwd(),".env"))
+    
+    EMAIL_ADDRESS = EMAIL_ADDRESS
+    EMAIL_KEY = EMAIL_KEY
+
+    msg = EmailMessage()
+    msg["Subject"] = "Thank you for registering"
+    msg["From"] = EMAIL_ADDRESS
+    msg["To"] = email
+
+    msg.set_content("Thank you for registering with our website... Happy Ordering!")
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465) as smtp:
+        smtp.login(EMAIL_ADDRESS, EMAIL_KEY)
+        smtp.send_message(msg)
+
+def parse_items(txt: str):
+    DATA = txt.split("&")
+    cmd, cmd_data = DATA[0].split("=")
+    data = DATA[1:]
+    return cmd, cmd_data, data

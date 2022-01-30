@@ -1,5 +1,4 @@
-import email
-from unicodedata import name
+from importlib.resources import path
 from backend_web import sql, os, UserMixin, dataclass, FlaskForm, pd
 from backend_web import functions as func
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
@@ -100,8 +99,9 @@ class Products(object):
         func.query_sql(path_sql, update_str, False)
 
     @staticmethod
-    def delete_food(ID_Product: int):
-        func.query_sql(path_sql, f'DELETE FROM PRODUCTS WHERE ID_Product = {ID_Product}')
+    def delete_food(ID_Products: list):
+        for ID_Product in ID_Products:
+            func.query_sql(path_sql, f'DELETE FROM PRODUCTS WHERE ID_Product = {ID_Product};', False)
         return 0
 
 @dataclass
@@ -125,6 +125,37 @@ class Orders(object):
         data = func.query_sql(path_sql, txt, True)
         return cls(*data)
 
+    @staticmethod
+    def view_stall_orders(ID_Stall: int, STATUS = False):
+        txt = f'SELECT * FROM ORDERS WHERE ID_STALL = {ID_Stall}' + (f" AND STATUS = {STATUS}" * (STATUS))
+        data = func.sql_tables(path_sql, txt)
+        return data
+
+    @staticmethod
+    def view_cart(ID_Customer: int):
+        txt = f'SELECT * FROM ORDERS WHERE ID_CUSTOMER = {ID_Customer} AND STATUS = "CARTED";'
+        data = func.sql_tables(path_sql, txt)
+        return data
+
+    @staticmethod
+    def update_order(ID_ORDER: list, STATUS: str):
+        for ID_ in ID_ORDER:
+            txt = f'UPDATE ORDERS SET STATUS = "{STATUS}" WHERE ID_ORDER = "{ID_}";'
+            func.query_sql(path_sql, txt, False)
+        return 0
+
+    @staticmethod
+    def view_orders(ID_Customer: int):
+        txt = f'SELECT * FROM ORDERS WHERE ID_CUSTOMER = {ID_Customer}'
+        data = func.sql_tables(path_sql, txt)
+        return data
+
+    @staticmethod
+    def cancel_orders(ID_ORDER: list):
+        for ID_ in ID_ORDER:
+            txt = f'DELETE FROM ORDERS WHERE ID_ORDER = {ID_};'
+            func.query_sql(path_sql, txt, False)
+        return 0
 
 @dataclass
 class Track(object):
@@ -132,6 +163,14 @@ class Track(object):
     ID_ORDER: int
     ID_STALL: int
     STATUS: str    # UNOCCUPIED, OCCUPIED
+
+    @staticmethod
+    def QUERY(ID_STALL = None):
+        if ID_STALL:
+            txt = f'SELECT * FROM TRACK WHERE ID_STALL = {ID_STALL};'
+            data = func.sql_tables(path_sql, txt)
+            return data
+        return func.sql_tables(path_sql, f"SELECT * FROM TRACK;")
 
     @staticmethod
     def REGISTER(ID_STALL: int):
@@ -147,12 +186,13 @@ class Track(object):
             return -1
         txt_2 = f'UPDATE TRACK SET ID_ORDER = {ID_ORDER[0]}, STATUS = "OCCUPIED" WHERE ID_BOX = {data[0]}'
         func.query_sql(path_sql, txt_2, False)
-        return 0
+        return ID_ORDER
 
     @staticmethod
-    def COMPLETE(ID_BOX: int):
+    def COMPLETE(ID_BOX: int, ID_ORDER: int):
         txt = f'UPDATE STATUS = "UNOCCUPIED" WHERE ID_BOX = {ID_BOX}'
         func.query_sql(path_sql, txt, False)
+        Orders.update_order([ID_ORDER],"COLLECTED")
         return 0
 
 class SearchForm(FlaskForm):
@@ -180,7 +220,7 @@ class LoginForm(FlaskForm):
     Submit = SubmitField(label="Login")
 
 class PurchaseForm(FlaskForm):
-    submit = SubmitField(label="Purchase")
+    submit = SubmitField(label="Add to Cart")
 
 class CheckOutForm(FlaskForm):
     submit = SubmitField(label="CheckOut")
