@@ -1,12 +1,13 @@
 from backend_web import os, load_dotenv, Flask, render_template, LoginManager, login_user, logout_user, login_required, current_user, flash, url_for, redirect
 from backend_web import models as mdls
 from backend_web import functions as func
-from backend_web import login_required, request, QRcode, abort
+from backend_web import login_required, request, QRcode, abort, pd
 
 load_dotenv(os.path.join(os.getcwd(),".env"))
 
 app = Flask(__name__, static_url_path="/static")
-
+SECRET_KEY = os.environ.get("SECRET_KEY")
+app.config["SECRET_KEY"] = SECRET_KEY
 login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 QRcode(app)
@@ -37,11 +38,11 @@ def login_page():
     return render_template("login.html", active_item="Login", form=form)
 
 # REGISTER PAGE
-@app.route("/register")
+@app.route("/register", methods=["GET", "POST"])
 def register_page():
     form = mdls.RegisterForm()
     if form.validate_on_submit():
-        instance = mdls.Customers("None", form.Name.data, form.Password.data, form.Email.data, form.Phone.data, form.Credit_Card.data)
+        instance = mdls.Customers(0, form.Name.data, form.Password.data, form.Email.data, form.Phone.data, form.Credit_Card.data)
         instance.register()
         func.notify_new(form.Email.data)
         flash("Created New Account Successfully!")
@@ -58,15 +59,17 @@ def register_page():
 def search():
     form = mdls.SearchForm()
     p_form = mdls.PurchaseForm()
-    if form.validate_on_submit():
-        data = mdls.Products.query_food(form.SearchValue.data)
+    if form.validate_on_submit() and request.method == "POST":
+        data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION"]]
+        print(data)
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
     if p_form.validate_on_submit() and request.form.get("Purchased-Item"):
         data = mdls.Products.query_food(form.SearchValue.data)
-        cart = mdls.Orders("NULL", request.form.get("Purchased-Item"), "CARTED", "NULL", current_user.Phone, current_user.Cus_Id)
+        cart = mdls.Orders(0, request.form.get("Purchased-Item"), "CARTED", "NULL", current_user.Phone, current_user.Cus_Id)
         cart.new_order()
         flash("Added", category="success")
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
+    print(mdls.Products.query_food(""))
     return render_template("search.html", active_item="Search", form=form, items=mdls.Products.query_food(""), purchase_form=p_form)
 
 @app.route("/register", methods=["GET", "POST"])
@@ -90,27 +93,55 @@ def view_all():
 
 @app.route("/qrcode/send/<orders_id>")
 def QR_CODES(orders_id: str):
-    return render_template("qrcode.html", items=orders_id)
+    return render_template("qrcode.html", items=f'{orders_id}')
 
 @app.route("/query/<items>")
 def query_items(items: str):
     cmd, cmd_data, data = func.parse_items(items)
 
     dic = {
-        "STALL_EX": mdls.Stall.retrieve_info,
-        "ORDER_STALL": mdls.Orders.view_stall_orders,
-        
+        "STALL": mdls.Stall.retrieve_info,
+        "ORDER": mdls.Orders.view_stall_orders,
+        "TRACK": mdls.Track.QUERY,
+        "TRACK_QUERY": mdls.Track.QUERY_BOX
         }
     
+    if dic.get(cmd_data):
+        df = dic[cmd_data](*data)
+        typing = type(df) == pd.core.frame.DataFrame or type(df) == pd.core.series.Series
+        return df.to_html() if typing else f'{df}'
 
-
-    return 
+    return abort(404)
     
 
-@app.route("/update/<items>")
+@app.route("/update/<items>")  # CMD=COMMAND&FIELD1=1&3 EXAMPLE
 def update_items(items: str):
     cmd, cmd_data, data = func.parse_items(items)
 
+    if cmd_data == "REGISTER_STALL":
+        mdls.Stall(*data).register()
+        return "Success"
+    elif cmd_data == "ADD_FOOD":
+        mdls.Products(*data).add_food()
+        return "Success"
+    elif cmd_data == "UPDATE_FOOD":
+        dic = {i.upper():j for i, j in (x.split("=") for x in data)}
+        mdls.Products.update_food(**dic)
+        return "Success"
+    elif cmd_data == "UPDATE_ORDER":
+        mdls.Orders.update_order(*data)
+        return "Success"
+    elif cmd_data == "ALLOCATE_ORDER":
+        mdls.Track.ALLOCATE(*data)
+        return "Success"
+    elif cmd_data == "COLLECTION_ORDER":
+        mdls.Orders.update_order(data, "COLLECTED")
+        return "Success"
+    elif cmd_data == "COMPLETE_TRACK_ORDER":
+        mdls.Track.COMPLETE(*data)
+        return "Success"
+    else:
+        return abort(404)
 
 @app.route("/delete/<items>")
 def delete_items(items: str):
@@ -124,7 +155,7 @@ def delete_items(items: str):
         return "Success"
     
     return abort(404)
-    
+
     
 
 @app.route("/log_out")

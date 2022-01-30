@@ -1,4 +1,3 @@
-from importlib.resources import path
 from backend_web import sql, os, UserMixin, dataclass, FlaskForm, pd
 from backend_web import functions as func
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
@@ -32,18 +31,21 @@ class Customers(UserMixin):
         
     @classmethod
     def retrieve_person(cls: object, id_: int):
-        data = func.query_sql(path_sql, f"SELECT * FROM CUSTOMERS WHERE ID = {id_};", True)
+        data = func.query_sql(path_sql, f"SELECT * FROM CUSTOMERS WHERE ID_CUSTOMERS = {id_};", True)
         return cls(*data)
 
     @classmethod
     def signin(cls: object, name: str, password: str):
-        txt = f'SELECT * FROM CUSTOMERS WHERE NAME = {name} AND PASSWORD = {password} LIMIT 1'
+        txt = f'SELECT * FROM CUSTOMERS WHERE NAME = "{name}" AND PASSWORD = "{password}";'
         data = func.query_sql(path_sql, txt, True)
         return cls(*data)
 
     def register(self):
+        lst = [types(i) for i, types in zip(self.__dict__.values(), self.__annotations__.values())]
         self.Cus_Id = "NULL"
-        func.query_sql(path_sql, f"INSERT INTO CUSTOMERS (ID_CUSTOMERS, NAME, PASSWORD, EMAIL, PHONE, CREDIT_CARD) VALUES {self.Cus_ID, self.Name, self.Password, self.Email, self.Phone, self.Credit_Card}", False)
+        txt = f"INSERT INTO CUSTOMERS (ID_CUSTOMERS, NAME, PASSWORD, EMAIL, PHONE, CREDIT_CARD) VALUES {func.NULL_FIRST(lst)}"
+        print(txt)
+        func.query_sql(path_sql, txt, False)
         return self
 
     def is_authenticated(self):
@@ -66,8 +68,8 @@ class Stall(object):
         return cls(*data)
 
     def register(self):
-        self.Stall_ID = "NULL"
-        func.query_sql(path_sql, f"INSERT INTO STALL (ID_STALL, NAME, PASSWORD, ACCOUNT, PHONE) VALUES {func.r_attr(self)}", False)
+        VAL = func.NULL_FIRST(func.r_attr(self))
+        func.query_sql(path_sql, f"INSERT INTO STALL (ID_STALL, NAME, PASSWORD, ACCOUNT, PHONE) VALUES {VAL}", False)
         return self
 
 @dataclass
@@ -87,15 +89,15 @@ class Products(object):
         return func.sql_tables(path_sql, f'SELECT * FROM PRODUCTS')
 
     def add_food(self):
-        self.ID_PRODUCT = "NULL"
-        func.query_sql(path_sql, f"INSERT INTO PRODUCTS {func.r_col(self)} VALUES {func.r_attr(self)}", False)
+        VAL = func.NULL_FIRST(func.r_attr(self))
+        func.query_sql(path_sql, f"INSERT INTO PRODUCTS {func.r_col(self)} VALUES {VAL}", False)
         return self
     
     @staticmethod
-    def update_food(ID_Product: int, **kwargs):
+    def update_food(ID_PRODUCT: int, **kwargs):
         col = Products.__annotations__
         new_dict = (f'{i} = {j}' for i, j in kwargs.items() if (i in col and type(j) == col[i]))
-        update_str = f'UPDATE PRODUCTS SET {new_dict} WHERE ID_PRODUCT = {ID_Product};'
+        update_str = f'UPDATE PRODUCTS SET {new_dict} WHERE ID_PRODUCT = {ID_PRODUCT};'
         func.query_sql(path_sql, update_str, False)
 
     @staticmethod
@@ -114,8 +116,8 @@ class Orders(object):
     ID_CUSTOMER: int
 
     def new_order(self):
-        self.ID_ORDER = "NULL"
-        txt = f'INSERT INTO ORDERS {func.r_col(self)} VALUES {func.r_attr(self)}'
+        VAL = func.NULL_FIRST(func.r_attr(self))
+        txt = f'INSERT INTO ORDERS {func.r_col(self)} VALUES {VAL}'
         func.query_sql(path_sql, txt, False)
         return self
 
@@ -148,6 +150,10 @@ class Orders(object):
     def view_orders(ID_Customer: int):
         txt = f'SELECT * FROM ORDERS WHERE ID_CUSTOMER = {ID_Customer}'
         data = func.sql_tables(path_sql, txt)
+        data_2 = func.sql_tables(path_sql, f'SELECT ID_PRODUCT, NAME, PRICE FROM PRODUCTS;')
+        df = data_2.loc[(data_2.isin(data["ID_PRODUCT"]))]
+        df = df.drop(["ID_PRODUCT"], axis=1)
+        data[df.columns.values] = df
         return data
 
     @staticmethod
@@ -173,6 +179,18 @@ class Track(object):
         return func.sql_tables(path_sql, f"SELECT * FROM TRACK;")
 
     @staticmethod
+    def QUERY_BOX(ID_BOX: int):
+        Q_ID_ORDER = f'SELECT ID_ORDER FROM TRACK WHERE ID_BOX = {ID_BOX};'
+        ID_ORDER = func.query_sql(path_sql, Q_ID_ORDER, True)
+        if not ID_ORDER:
+            return -1
+        Q_STATUS = f'SELECT STATUS FROM ORDERS WHERE ID_ORDER = {ID_ORDER[0]}'
+        STATUS = func.query_sql(path_sql, Q_STATUS, True)
+        if not STATUS:
+            return -1
+        return f'{STATUS[0]}'
+
+    @staticmethod
     def REGISTER(ID_STALL: int):
         txt = f'INSERT INTO TRACK ID_BOX VALUES (NULL, NULL, {ID_STALL}, "UNOCCUPIED")'
 
@@ -189,10 +207,9 @@ class Track(object):
         return ID_ORDER
 
     @staticmethod
-    def COMPLETE(ID_BOX: int, ID_ORDER: int):
+    def COMPLETE(ID_BOX: int):
         txt = f'UPDATE STATUS = "UNOCCUPIED" WHERE ID_BOX = {ID_BOX}'
         func.query_sql(path_sql, txt, False)
-        Orders.update_order([ID_ORDER],"COLLECTED")
         return 0
 
 class SearchForm(FlaskForm):
@@ -201,16 +218,17 @@ class SearchForm(FlaskForm):
 
 class RegisterForm(FlaskForm):
     Name = StringField(label="UserName", validators=[DataRequired()])
-    Phone = StringField(label="Phone Number", validators=[DataRequired(), Length(min=8, max=8)])
+    Phone = StringField(label="Phone Number", validators=[DataRequired()])
     Email = EmailField(label="Email", validators=[DataRequired(), Email()])
-    Credit_Card = StringField(label="Credit Card Information", validators=[DataRequired(), Length(min="16", max="16", message="Enter a valid credit card")])
+    Credit_Card = StringField(label="Credit Card Information", validators=[DataRequired()])
     Password = PasswordField(label="Password", validators=[DataRequired()])
     Password_1 = PasswordField(label="Password", validators=[DataRequired()])
     Submit = SubmitField(label="Submit")
 
     def validate_Name(self, Name: str):
-        res = func.query_sql(path_sql, f"SELECT ID_CUSTOMERS FROM CUSTOMERS WHERE NAME = {Name}", True)
-        if not res:
+        res = func.query_sql(path_sql, f"SELECT ID_CUSTOMERS FROM CUSTOMERS WHERE NAME = '{Name}'", True)
+        print(res)
+        if res != None:
             raise ValidationError("UserName Already Exists...")
         return 0
 
@@ -218,6 +236,14 @@ class LoginForm(FlaskForm):
     Name = StringField(label="UserName", validators=[DataRequired()])
     Password = PasswordField(label="Password", validators=[DataRequired()])
     Submit = SubmitField(label="Login")
+
+    def validate_Password(self, Password: str):
+        res = func.query_sql(path_sql, f"SELECT ID_CUSTOMERS FROM CUSTOMERS WHERE NAME = '{self.Name.data}' AND PASSWORD = '{Password.data}';", True)
+        print(f"SELECT * FROM CUSTOMERS WHERE NAME = '{self.Name.data}' AND PASSWORD = '{Password.data}';")
+        print(res)
+        if res == None:
+            raise ValidationError("Invalid Username or Password")
+        return 0
 
 class PurchaseForm(FlaskForm):
     submit = SubmitField(label="Add to Cart")

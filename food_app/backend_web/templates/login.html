@@ -9,10 +9,10 @@ Login Page
     <form method="POST" class="form-register" style="color: white">
         {{ form.hidden_tag() }}
         <p>{{ form.Name.label() }}</p>
-        {{ form.Name(class="form-control" placeholder="Username")}}
+        {{ form.Name(class="form-control", placeholder="Username")}}
         <br>
         <p>{{ form.Password.label() }}</p>
-        {{ form.Password(class="form-control" placeholder="Password") }}
+        {{ form.Password(class="form-control", placeholder="Password") }}
 
         {{ form.Submit(class="btn btn-primary") }}
     </form>

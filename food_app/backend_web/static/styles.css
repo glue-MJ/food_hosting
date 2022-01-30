@@ -60,3 +60,30 @@ a ~ a {
     text-decoration: none;
     pointer-events: none;
 }
+
+form {
+    width: 100%;
+    margin-left: auto;
+    margin-right: auto;
+    display: inline-block;
+    }
+
+.card {
+    width: 100%;
+    align-self: center;
+}
+
+.card ~ .card {
+    margin-bottom: 25px;
+}
+
+.search-bar[type=text] {
+    width: 40%;
+    -webkit-transition: width 0.4s ease-in-out;
+    transition: width 0.4s ease-in-out;
+  }
+  
+
+.search-bar[type=text]:focus {
+    width: 100%;
+  }

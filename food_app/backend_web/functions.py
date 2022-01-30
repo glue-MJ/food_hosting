@@ -2,7 +2,7 @@ from backend_web import sql, pd
 
 def query_sql(PATH_SQL: str, Query: str, fetch: bool):
     with sql.connect(PATH_SQL) as conn:
-        cur = conn.execute(PATH_SQL)
+        cur = conn.cursor()
         cur.execute(Query)
         if fetch:
             return cur.fetchone()
@@ -26,7 +26,7 @@ def initialize_products(PATH_SQL: str):
             ID_PRODUCT INTEGER PRIMARY KEY,
             NAME TEXT,
             DESCRIPTION TEXT,
-            ID_STALL INTEGER
+            ID_STALL INTEGER,
             PRICE REAL
         );
         """)
@@ -92,7 +92,8 @@ def initialize_track(PATH_SQL: str):
     return 0
 
 def r_attr(self):  # RETURNS THE VALUES OF AN INSTANCE VARIABLES
-    return (*vars(self).values(),)
+    lst = [types(i) for i, types in zip(self.__dict__.values(), self.__annotations__.values())]
+    return (*lst,)
 
 def r_col(self):  # RETURNS THE PROPERTIES OF A CLASS OR INSTANCE
     if type(self) == type(type):  # CHECK IF ITS AN CLASS OR INSTANCE OF A CLASS
@@ -109,8 +110,8 @@ def notify_new(email: str):
 
     load_dotenv(os.path.join(os.getcwd(),".env"))
     
-    EMAIL_ADDRESS = EMAIL_ADDRESS
-    EMAIL_KEY = EMAIL_KEY
+    EMAIL_ADDRESS = os.environ.get("EMAIL_ADDRESS")
+    EMAIL_KEY = os.environ.get("EMAIL_KEY")
 
     msg = EmailMessage()
     msg["Subject"] = "Thank you for registering"
@@ -128,3 +129,8 @@ def parse_items(txt: str):
     cmd, cmd_data = DATA[0].split("=")
     data = DATA[1:]
     return cmd, cmd_data, data
+
+def NULL_FIRST(lst: list):
+    a = f'{lst[1:]}'[1:-1]
+    b = f'(NULL, {a})'
+    return b

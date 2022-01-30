@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block title %}
+Register Page
+{% endblock %}
+
+{% block content %}
+    <br>
+    <form method="POST" class="form-register" style="color:white; width: fit-content; display: inline-block;">
+        {{ form.hidden_tag() }}
+        <p>{{ form.Name.label() }}</p>
+        {{ form.Name(class="form-control", placeholder="Username")}}
+        <br>
+
+        <p>{{ form.Phone.label() }}</p>
+        {{ form.Phone(class="form-control", placeholder="Phone")}}
+        <br>
+
+        <p>{{ form.Email.label() }}</p>
+        {{ form.Email(class="form-control", placeholder="Email")}}
+        <br>
+        
+        <p>{{ form.Credit_Card.label() }}</p>
+        {{ form.Credit_Card(class="form-control", placeholder="Credit_Card")}}
+        <br>
+
+        <p>{{ form.Password.label() }}</p>
+        {{ form.Password(class="form-control", placeholder="Password")}}
+        <br>
+
+        <p>{{ form.Password_1.label() }}</p>
+        {{ form.Password_1(class="form-control", placeholder="Confirm Password")}}
+        <br>
+        <br>
+        {{ form.hidden_tag() }}
+        {{ form.Submit(class="btn btn-primary") }}
+    </form>
+{% endblock %}
