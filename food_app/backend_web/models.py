@@ -2,6 +2,7 @@ from backend_web import sql, os, UserMixin, dataclass, FlaskForm, pd
 from backend_web import functions as func
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
 from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
+import json
 
 path_sql = os.path.join(os.getcwd(), "storage.db")
 
@@ -91,6 +92,11 @@ class Products(object):
     def add_food(self):
         VAL = func.NULL_FIRST(func.r_attr(self))
         func.query_sql(path_sql, f"INSERT INTO PRODUCTS {func.r_col(self)} VALUES {VAL}", False)
+        ID_PRODUCT = func.query_sql(path_sql, f"SELECT ID_PRODUCT FROM PRODUCTS ORDER BY ID_PRODUCTS DESC LIMIT 1;", True)
+        if ID_PRODUCT:
+            with open("products.json") as file:
+                dic = json.load(file)
+                dic = {**dic, {f'{ID_PRODUCT}':"Food_BackGround.jpg"}}
         return self
     
     @staticmethod
@@ -112,7 +118,7 @@ class Orders(object):
     ID_PRODUCT: int
     STATUS: str    # CARTED, PENDING, PREPARING, READY, COLLECTED
     SPECIAL_REQUESTS: str
-    PHONE: str
+    PHONE_NO: str
     ID_CUSTOMER: int
 
     def new_order(self):
@@ -135,7 +141,7 @@ class Orders(object):
 
     @staticmethod
     def view_cart(ID_Customer: int):
-        txt = f'SELECT * FROM ORDERS WHERE ID_CUSTOMER = {ID_Customer} AND STATUS = "CARTED";'
+        txt = f'SELECT * FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_CUSTOMER = {ID_Customer} AND STATUS = "CARTED";'
         data = func.sql_tables(path_sql, txt)
         return data
 
@@ -148,12 +154,8 @@ class Orders(object):
 
     @staticmethod
     def view_orders(ID_Customer: int):
-        txt = f'SELECT * FROM ORDERS WHERE ID_CUSTOMER = {ID_Customer}'
+        txt = f'SELECT ID_ORDER, NAME, PRICE, STATUS FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_CUSTOMER = {ID_Customer};'
         data = func.sql_tables(path_sql, txt)
-        data_2 = func.sql_tables(path_sql, f'SELECT ID_PRODUCT, NAME, PRICE FROM PRODUCTS;')
-        df = data_2.loc[(data_2.isin(data["ID_PRODUCT"]))]
-        df = df.drop(["ID_PRODUCT"], axis=1)
-        data[df.columns.values] = df
         return data
 
     @staticmethod
@@ -193,6 +195,10 @@ class Track(object):
     @staticmethod
     def REGISTER(ID_STALL: int):
         txt = f'INSERT INTO TRACK ID_BOX VALUES (NULL, NULL, {ID_STALL}, "UNOCCUPIED")'
+        BOX_ID_Q = f'SELECT ID_BOX FROM TRACK ORDER BY ID_BOX DESC LIMIT 1;'
+        func.query_sql(path_sql, txt, False)
+        BOX_ID = func.query_sql(path_sql, BOX_ID_Q, True)[0] 
+        return BOX_ID
 
     @staticmethod
     def ALLOCATE(ID_STALL: int):
@@ -250,3 +256,8 @@ class PurchaseForm(FlaskForm):
 
 class CheckOutForm(FlaskForm):
     submit = SubmitField(label="CheckOut")
+
+class UploadForm(FlaskForm):
+    ID = StringField(label="FOOD ID", validators=[DataRequired()])
+    photo = FileField(validators=[FileAllowed(photos, u'Image only!'), FileRequired(u'File was empty!')])
+    submit = SubmitField(u'Upload')

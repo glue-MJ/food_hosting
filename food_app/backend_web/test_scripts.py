@@ -2,6 +2,11 @@ import sqlite3 as sql
 from backend_web import path_sql
 from backend_web import functions as func
 from backend_web import models as mdls
+import json
+
+with open("products.json") as file:
+    dic = json.load(file)
+    print(dic.get(1))
 
 # with sql.connect(path_sql) as conn:
 #     cur = conn.cursor()
@@ -23,3 +28,11 @@ from backend_web import models as mdls
 # mdls.Products(0, "McSpicy", "God Tier Food", 1, 5.00).add_food()
 # mdls.Products(0, "Pancakes", "God Tier Food", 1, 1.80).add_food()
 # mdls.Products(0, "Hashbrowns", "God Tier Food", 1, 1.50).add_food()
+
+# with sql.connect(path_sql) as conn:
+#     cur = conn.cursor()
+#     ID_STALL = 1
+#     txt = f'SELECT * FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_STALL = {ID_STALL} AND STATUS = "CARTED";'
+#     cur.execute(txt)
+#     print(cur.fetchall())
+#     print(next(zip(*cur.description)))

@@ -134,3 +134,9 @@ def NULL_FIRST(lst: list):
     a = f'{lst[1:]}'[1:-1]
     b = f'(NULL, {a})'
     return b
+
+def json_to_dic(path: str):
+    import json
+    with open(path) as file:
+        dic = json.load(file)
+    return dic

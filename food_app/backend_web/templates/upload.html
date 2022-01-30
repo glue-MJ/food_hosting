@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+
+<form method="POST" enctype="multipart/form-data">
+    {{ form.hidden_tag() }}
+    <p>{{ form.ID.label() }}</p>
+    {{ form.ID(class="form-control", placeholder="Food ID")}}
+    {{ form.photo }}
+    {% for error in form.photo.errors %}
+        <span style="color: red;">{{ error }}</span>
+    {% endfor %}
+    {{ form.submit }}
+</form>
+
+{% if file_url %}
+<br>
+<img src="{{ file_url }}">
+{% endif %}
+
+{% endblock %}

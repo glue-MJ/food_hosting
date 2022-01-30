@@ -2,13 +2,13 @@
 {% block content %}
 
 <div class="container">
-    {% for item in items %}
-    <div class="container-fluid">
-        <strong><h5>Order_ID: {{ item.ID_ORDER.values }}</h5></strong>
-        <p>Item: {{ item.NAME.values }}</p>
-        <p>Price: ${{ item.PRICE.values }}</p>
-        <p>Status: {{ item.STATUS.values }}</p>
-    </div>
+    {% for item in items.values %}
+    <div class="container-fluid div-hover" style="border: 5px solid white; padding-bottom: 5px;">
+      <p style="text-align: center; border-bottom: 2px solid white;">Status: {{ item[3] }}</p>
+        <strong><h5>Order_ID: {{ item[0] }}</h5></strong>
+        <p>Item: {{ item[1] }}</p>
+        <p>Price: ${{ item[2] }}</p>
+      </div>  
     {% endfor %}
   </div>
 

@@ -1,13 +1,22 @@
 from backend_web import os, load_dotenv, Flask, render_template, LoginManager, login_user, logout_user, login_required, current_user, flash, url_for, redirect
 from backend_web import models as mdls
 from backend_web import functions as func
-from backend_web import login_required, request, QRcode, abort, pd
+from backend_web import login_required, request, QRcode, abort, pd, path_sql
+from flask_uploads import UploadSet, configure_uploads, IMAGES, patch_request_class
+import json
 
 load_dotenv(os.path.join(os.getcwd(),".env"))
 
 app = Flask(__name__, static_url_path="/static")
+
 SECRET_KEY = os.environ.get("SECRET_KEY")
 app.config["SECRET_KEY"] = SECRET_KEY
+app.config["UPLOADED_PHOTOS_DEST"] = os.path.join(os.getcwd(), "static")
+
+photos = UploadSet('photos', IMAGES)
+configure_uploads(app, photos)
+patch_request_class(app)
+
 login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 QRcode(app)
@@ -60,30 +69,29 @@ def search():
     form = mdls.SearchForm()
     p_form = mdls.PurchaseForm()
     if form.validate_on_submit() and request.method == "POST":
-        data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION"]]
-        print(data)
+        data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]]
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
     if p_form.validate_on_submit() and request.form.get("Purchased-Item"):
-        data = mdls.Products.query_food(form.SearchValue.data)
+        data = mdls.Products.query_food(form.SearchValue.data)[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]]
         cart = mdls.Orders(0, request.form.get("Purchased-Item"), "CARTED", "NULL", current_user.Phone, current_user.Cus_Id)
         cart.new_order()
         flash("Added", category="success")
         return render_template("search.html", active_item="Search", form=form, items=data, purchase_form=p_form)
-    print(mdls.Products.query_food(""))
-    return render_template("search.html", active_item="Search", form=form, items=mdls.Products.query_food(""), purchase_form=p_form)
+    return render_template("search.html", active_item="Search", form=form, items=mdls.Products.query_food("")[["NAME", "PRICE", "DESCRIPTION", "ID_PRODUCT"]], purchase_form=p_form)
 
-@app.route("/register", methods=["GET", "POST"])
+@app.route("/checkout", methods=["GET", "POST"])
 @login_required
 def checkout():
     form = mdls.CheckOutForm()
-    data = mdls.Orders.view_cart(current_user.Cus_Id)
-    filled = False
+    data = mdls.Orders.view_cart(current_user.Cus_Id)[["NAME", "PRICE", "ID_ORDER"]]
+    subtotal = data.PRICE.values.sum()
+    filled = data.values.size >= 1  # TEST FOR LEN
     if form.validate_on_submit() and request.method == "POST":
-        if data:
+        if filled:
             mdls.Orders.update_order(data["ID_ORDER"].values, "PENDING")
             flash("ORDER SENT", category="success")
             return redirect(url_for("view_all"))
-    return render_template("checkout.html", items=data, form=form, filled=filled)
+    return render_template("checkout.html", items=data, form=form, filled=filled, Aggregate=subtotal)
 
 @app.route("/view", methods=["GET"])
 @login_required
@@ -94,6 +102,20 @@ def view_all():
 @app.route("/qrcode/send/<orders_id>")
 def QR_CODES(orders_id: str):
     return render_template("qrcode.html", items=f'{orders_id}')
+
+@app.route("/upload", methods=["GET", "POST"])
+def upload_file():
+    form = mdls.UploadForm()
+    if form.validate_on_submit():
+        with open("products.json") as file:
+            dic = json.load(file)
+            filename = photos.save(form.photo.data)
+            file_url = photos.url(filename)
+            if dic.get(f'{form.ID.data}'):
+                dic[f'{form.ID.data}'] = f'{filename}'
+    else:
+        file_url = None
+    return render_template("upload.html", form=form, file_url=file_url)
 
 @app.route("/query/<items>")
 def query_items(items: str):
@@ -112,7 +134,16 @@ def query_items(items: str):
         return df.to_html() if typing else f'{df}'
 
     return abort(404)
-    
+
+@app.route("/query_sql/<query>")
+def query_sql(query: str):
+    cmd, cmd_data, data = func.parse_items(query)
+    key = os.environ.get("SECRET_KEY")
+    if cmd_data == key:
+        return func.query_sql(path_sql, query, True)
+    return abort(404)
+
+@app.route("/upload")
 
 @app.route("/update/<items>")  # CMD=COMMAND&FIELD1=1&3 EXAMPLE
 def update_items(items: str):

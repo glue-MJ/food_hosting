@@ -77,8 +77,12 @@ form {
     margin-bottom: 25px;
 }
 
+.search-bar {
+    display: block; margin:auto
+}
+
 .search-bar[type=text] {
-    width: 40%;
+    width: 50%;
     -webkit-transition: width 0.4s ease-in-out;
     transition: width 0.4s ease-in-out;
   }
@@ -87,3 +91,13 @@ form {
 .search-bar[type=text]:focus {
     width: 100%;
   }
+
+.div-hover {
+    width: 50%;
+}
+
+.div-hover::after {
+    width: 100%;
+    -webkit-transition: width 0.4s ease-in-out;
+    transition: width 0.4s ease-in-out;
+}
