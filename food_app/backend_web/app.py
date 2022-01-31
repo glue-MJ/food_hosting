@@ -62,7 +62,7 @@ def register_page():
         instance = mdls.Customers(0, form.Name.data, form.Password.data, form.Email.data, form.Phone.data, form.Credit_Card.data)
         instance.register()
         func.notify_new(form.Email.data)
-        flash("Created New Account Successfully!")
+        flash("Created New Account Successfully!", category="success")
         return redirect(url_for('login_page'))
     
     for err in form.errors.values():
@@ -104,7 +104,7 @@ def checkout():
             mdls.Orders.update_order(data["ID_ORDER"].values, "PENDING")
             flash("ORDER SENT", category="success")
             return redirect(url_for("view_all"))
-    return render_template("checkout.html", items=data, form=form, filled=filled, Aggregate=subtotal)
+    return render_template("checkout.html", active_item="Checkout", items=data, form=form, filled=filled, Aggregate=subtotal)
 
 @app.route("/view", methods=["GET", "POST"])
 @login_required
@@ -114,7 +114,7 @@ def view_all():
     if cf.validate_on_submit() and request.method == "POST" and request.form.get("Cancelled-Item"):
         mdls.Orders.cancel_orders(request.form.get("Cancelled-Item"))
         data = mdls.Orders.view_orders(current_user.Cus_Id)
-    return render_template("view_all.html", items=data, cancel_form=cf)
+    return render_template("view_all.html", active_item="View", items=data, cancel_form=cf)
 
 @app.route("/qrcode/send/<orders_id>")
 def QR_CODES(orders_id: str):

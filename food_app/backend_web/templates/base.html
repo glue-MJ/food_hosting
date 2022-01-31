@@ -12,21 +12,21 @@
     <nav class="navbar navbar-expand-md navbar-dark bg-dark nav nav-tabs">
         <a class="btn noHover navbar-brand" href="{{ url_for('index')}}">Gourmet Fast</a>
         <div class="Menu-Buttons">
-            <a class="btn btn-dark {% if active_item == 'home' %}active{% endif %}" href='{{ url_for("index")}}'>Home</a>
+            <a class="btn btn-dark {% if active_item == 'home' %}active{% endif %}" href='{{ url_for("index")}}'>Home 🏠</a>
             {% if current_user.is_authenticated %}
-            <a class="btn btn-dark {% if active_item == 'Search' %}active{% endif %}" href='{{ url_for("search")}}'>Search</a>
-            <a class="btn btn-dark {% if active_item == 'About' %}active{% endif %}" href='{{ url_for("view_all")}}'>View_History</a>
+            <a class="btn btn-dark {% if active_item == 'Search' %}active{% endif %}" href='{{ url_for("search")}}'>Search 🔍</a>
+            <a class="btn btn-dark {% if active_item == 'View' %}active{% endif %}" href='{{ url_for("view_all")}}'>View_History 👁</a>
             {% endif %}
         </div>
     {% if current_user.is_authenticated %}
         <div class="rightwards">
-            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href="{{ url_for('log_out_page') }}">Log Out</a>
-            <a class="btn btn-dark {% if active_item == 'Checkout' %}active{% endif %}" href="{{ url_for('checkout') }}">Check Out</a>
+            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href="{{ url_for('log_out_page') }}">Log Out 🚪</a>
+            <a class="btn btn-dark {% if active_item == 'Checkout' %}active{% endif %}" href="{{ url_for('checkout') }}">Check Out 🛒</a>
         </div>
     {% else %}
         <div class='rightwards'>
-            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href='{{ url_for("login_page")}}'>Login Page</a>
-            <a class="btn btn-dark {% if active_item == 'Register' %}active{% endif %}" href='{{ url_for("register_page")}}'>Register</a>
+            <a class="btn btn-dark {% if active_item == 'Login' %}active{% endif %}" href='{{ url_for("login_page")}}'>Login Page 🔐</a>
+            <a class="btn btn-dark {% if active_item == 'Register' %}active{% endif %}" href='{{ url_for("register_page")}}'>Register ®</a>
         </div>
     {% endif %}
     </nav>
