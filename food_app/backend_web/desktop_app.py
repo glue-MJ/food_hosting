@@ -6,7 +6,7 @@ from flask_uploads import UploadSet, configure_uploads, IMAGES, patch_request_cl
 from flask_wtf.file import FileField, FileRequired, FileAllowed
 from wtforms import StringField, EmailField, PasswordField, SubmitField, IntegerField
 from wtforms.validators import Length, EqualTo, DataRequired, Email, ValidationError
-from flask_ngrok import run_with_ngrok
+from flaskwebgui import FlaskUI
 import json
 
 load_dotenv(os.path.join(os.getcwd(),".env"))
@@ -25,7 +25,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 QRcode(app)
 
-run_with_ngrok(app)
+UI = FlaskUI(app)
 
 class UploadForm(FlaskForm):
     ID = StringField(label="FOOD ID", validators=[DataRequired()])
@@ -166,6 +166,8 @@ def query_sql(query: str):
         return func.query_sql(path_sql, query, True)
     return abort(404)
 
+@app.route("/upload")
+
 @app.route("/update/<items>")  # CMD=COMMAND&FIELD1=1&3 EXAMPLE
 def update_items(items: str):
     cmd, cmd_data, data = func.parse_items(items)
@@ -220,4 +222,4 @@ def log_out_page():
 
 
 if __name__ == '__main__':
-    app.run()
+    UI.run()
