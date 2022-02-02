@@ -118,7 +118,7 @@ class Products(object):
 class Orders(object):
     ID_ORDER: int
     ID_PRODUCT: int
-    STATUS: str    # CARTED, PENDING, PREPARING, READY, COLLECTED
+    STATUS: str    # CARTED, PENDING, PREPARING, U_READY, P_READY ,COLLECTED
     SPECIAL_REQUESTS: str
     PHONE_NO: str
     ID_CUSTOMER: int
@@ -207,7 +207,7 @@ class Track(object):
     def ALLOCATE(ID_STALL: int):
         txt = f'SELECT ID_BOX FROM TRACK WHERE STATUS = "UNOCCUPIED" AND STALL_ID = {ID_STALL} LIMIT 1 '
         data = func.query_sql(path_sql, txt, True)
-        txt_f = f'SELECT ID_ORDER FROM ORDERS WHERE STATUS = "READY" AND STALL_ID = {ID_STALL} LIMIT 1'
+        txt_f = f'SELECT ID_ORDER FROM ORDERS WHERE STATUS LIKE "READY" AND STALL_ID = {ID_STALL} LIMIT 1'
         ID_ORDER = func.query_sql(path_sql, txt_f, True)
         if data == None or ID_ORDER == None:
             return -1
