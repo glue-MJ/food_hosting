@@ -170,26 +170,26 @@ def query_sql(query: str):
 def update_items(items: str):
     cmd, cmd_data, data = func.parse_items(items)
 
-    if cmd_data == "REGISTER_STALL":
+    if cmd_data == "REGISTERSTALL":
         mdls.Stall(*data).register()
         return "Success"
-    elif cmd_data == "ADD_FOOD":
+    elif cmd_data == "ADDFOOD":
         mdls.Products(*data).add_food()
         return "Success"
-    elif cmd_data == "UPDATE_FOOD":
+    elif cmd_data == "UPDATEFOOD":
         dic = {i.upper():j for i, j in (x.split("=") for x in data)}
         mdls.Products.update_food(**dic)
         return "Success"
-    elif cmd_data == "UPDATE_ORDER":
+    elif cmd_data == "UPDATEORDER":
         mdls.Orders.update_order(*data)
         return "Success"
-    elif cmd_data == "ALLOCATE_ORDER":
+    elif cmd_data == "ALLOCATEORDER":
         mdls.Track.ALLOCATE(*data)
         return "Success"
-    elif cmd_data == "COLLECTION_ORDER":
+    elif cmd_data == "COLLECTIONORDER":
         mdls.Orders.update_order(data, "COLLECTED")
         return "Success"
-    elif cmd_data == "COMPLETE_TRACK_ORDER":
+    elif cmd_data == "COMPLETETRACKORDER":
         mdls.Track.COMPLETE(*data)
         return "Success"
     else:
