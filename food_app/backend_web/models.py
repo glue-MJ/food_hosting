@@ -70,6 +70,11 @@ class Stall(object):
         data = func.query_sql(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = {Account} AND PASSWORD = {Password};", True)
         return cls(*data)
 
+    @staticmethod
+    def retrieve_info2(ID: int, Account: str, Password: str):
+        data = func.sql_tables(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = {Account} AND PASSWORD = {Password};", True)
+        return data
+
     def register(self):
         VAL = func.NULL_FIRST(func.r_attr(self))
         func.query_sql(path_sql, f"INSERT INTO STALL (ID_STALL, NAME, PASSWORD, ACCOUNT, PHONE) VALUES {VAL}", False)
