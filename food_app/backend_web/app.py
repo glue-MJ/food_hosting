@@ -145,7 +145,7 @@ def query_items(items: str):
     cmd, cmd_data, data = func.parse_items(items)
 
     dic = {
-        "STALL": mdls.Stall.retrieve_info,
+        "STALL": mdls.Stall.retrieve_info2,
         "ORDER": mdls.Orders.view_stall_orders,
         "TRACK": mdls.Track.QUERY,
         "TRACK_QUERY": mdls.Track.QUERY_BOX
