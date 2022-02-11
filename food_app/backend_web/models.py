@@ -67,18 +67,24 @@ class Stall(object):
 
     @classmethod
     def retrieve_info(cls: object, Account: str, Password: str):
-        data = func.query_sql(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = {Account} AND PASSWORD = {Password};", True)
+        data = func.query_sql(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = '{Account}' AND PASSWORD = '{Password}';")
         return cls(*data)
 
     @staticmethod
     def retrieve_info2(ID: int, Account: str, Password: str):
-        data = func.sql_tables(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = {Account} AND PASSWORD = {Password};", True)
+        data = func.sql_tables(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = '{Account}' AND PASSWORD = '{Password}';")
         return data
 
     def register(self):
+        self.Stall_ID = "NULL"
         VAL = func.NULL_FIRST(func.r_attr(self))
-        func.query_sql(path_sql, f"INSERT INTO STALL (ID_STALL, NAME, PASSWORD, ACCOUNT, PHONE) VALUES {VAL}", False)
+        func.query_sql(path_sql, f"INSERT INTO STALL (ID_STALL, NAME, PASSWORD, ACCOUNT, PHONE) VALUES {VAL}")
         return self
+
+    @staticmethod
+    def validate_account_name(name: str):
+        res = func.query_sql(path_sql, f"SELECT * FROM STALL WHERE ACCOUNT = '{name}' LIMIT 1;", True)
+        return 'True' if res else 'False'
 
 @dataclass
 class Products(object):
@@ -123,7 +129,7 @@ class Products(object):
 class Orders(object):
     ID_ORDER: int
     ID_PRODUCT: int
-    STATUS: str    # CARTED, PENDING, PREPARING, U_READY, P_READY ,COLLECTED
+    STATUS: str    # CARTED, PENDING, PREPARING, READY ,COLLECTED, FINISHED
     SPECIAL_REQUESTS: str
     PHONE_NO: str
     ID_CUSTOMER: int
@@ -153,9 +159,9 @@ class Orders(object):
         return data
 
     @staticmethod
-    def update_order(ID_ORDER: list, STATUS: str):
-        for ID_ in ID_ORDER:
-            txt = f'UPDATE ORDERS SET STATUS = "{STATUS}" WHERE ID_ORDER = "{ID_}";'
+    def update_order(ID_ORDER_: int, STATUS: str):
+        for ID_ORDER in ID_ORDER_:
+            txt = f'UPDATE ORDERS SET STATUS = "{STATUS}" WHERE ID_ORDER = "{ID_ORDER}";'
             func.query_sql(path_sql, txt, False)
         return 0
 
@@ -163,7 +169,7 @@ class Orders(object):
     def view_orders(ID_Customer: int):
         txt = f'SELECT ID_ORDER, NAME, PRICE, STATUS, ID_STALL FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE ID_CUSTOMER = {ID_Customer};'
         data = func.sql_tables(path_sql, txt)
-        data["COUNTER"] = [func.query_sql(path_sql, f'SELECT COUNT(ID_STALL) AS COUNTER FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE STATUS IN ("PENDING", "PREPARING") GROUP BY ID_STALL HAVING ID_STALL = {ID_STALL} LIMIT 1;', True)[0] for ID_STALL in data["ID_STALL"].values if ID_STALL]
+        # data["COUNTER"] = [func.query_sql(path_sql, f'SELECT COUNT(ID_STALL) AS COUNTER FROM ORDERS INNER JOIN PRODUCTS USING (ID_PRODUCT) WHERE STATUS IN ("PENDING", "PREPARING") GROUP BY ID_STALL HAVING ID_STALL = {ID_STALL} LIMIT 1;', True)[0] for ID_STALL in data["ID_STALL"].values if ID_STALL]
         return data
 
     @staticmethod
@@ -178,6 +184,7 @@ class Track(object):
     ID_BOX: int
     ID_ORDER: int
     ID_STALL: int
+    TEMPERATURE: int
     STATUS: str    # UNOCCUPIED, OCCUPIED
 
     @staticmethod
@@ -201,8 +208,32 @@ class Track(object):
         return f'{STATUS[0]}'
 
     @staticmethod
+    def BOX_ORDER(ID_BOX: int):
+        QUERY = f'SELECT ID_ORDER FROM TRACK WHERE ID_BOX = {ID_BOX}'
+        ID_ORDER = func.query_sql(path_sql, QUERY, True)[0]
+        return f'{ID_ORDER}'
+
+    @staticmethod
+    def STORE_BOX(ID_STORE: int):
+        QUERY = f'SELECT * FROM TRACK WHERE ID_STALL = {ID_STORE}'
+        return func.sql_tables(path_sql, QUERY)
+
+    @staticmethod
+    def UPDATE_ORDER_BOX(ID_BOX: int, ID_ORDER: int):
+        STATUS = "UNOCCUPIED" if int(ID_ORDER) == 0 else "OCCUPIED"
+        QUERY = f"UPDATE TRACK SET ID_ORDER = {ID_ORDER}, STATUS = '{STATUS}' WHERE ID_BOX = {ID_BOX};"
+        func.query_sql(path_sql, QUERY, False)
+        return 0
+
+    @staticmethod
+    def UPDATE_TEMPERATURE(ID_BOX: int, TEMPERATURE: int):
+        QUERY = f"UPDATE TRACK SET TEMPERATURE = {TEMPERATURE} WHERE ID_BOX = {ID_BOX};"
+        func.query_sql(path_sql, QUERY, False)
+        return 0
+
+    @staticmethod
     def REGISTER(ID_STALL: int):
-        txt = f'INSERT INTO TRACK ID_BOX VALUES (NULL, NULL, {ID_STALL}, "UNOCCUPIED")'
+        txt = f'INSERT INTO TRACK VALUES (NULL, 0, {ID_STALL}, 0, "UNOCCUPIED")'
         BOX_ID_Q = f'SELECT ID_BOX FROM TRACK ORDER BY ID_BOX DESC LIMIT 1;'
         func.query_sql(path_sql, txt, False)
         BOX_ID = func.query_sql(path_sql, BOX_ID_Q, True)[0] 

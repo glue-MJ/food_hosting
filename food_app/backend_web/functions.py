@@ -86,6 +86,7 @@ def initialize_track(PATH_SQL: str):
             ID_BOX INTEGER PRIMARY KEY,
             ID_ORDER INTEGER NULL,
             ID_STALL INTEGER NULL,
+            TEMPERATURE INTEGER,
             STATUS TEXT
         );
         """)

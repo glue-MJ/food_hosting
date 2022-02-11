@@ -14,6 +14,7 @@ load_dotenv(os.path.join(os.getcwd(),".env"))
 app = Flask(__name__, static_url_path="/static")
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
+
 app.config["SECRET_KEY"] = SECRET_KEY
 app.config["UPLOADED_PHOTOS_DEST"] = os.path.join(os.getcwd(), "static")
 
@@ -25,7 +26,7 @@ login_manager = LoginManager(app)
 login_manager.login_view = "login_page"
 QRcode(app)
 
-run_with_ngrok(app)
+# run_with_ngrok(app)
 
 class UploadForm(FlaskForm):
     ID = StringField(label="FOOD ID", validators=[DataRequired()])
@@ -114,8 +115,9 @@ def checkout():
 def view_all():
     cf = mdls.CancelForm()
     data = mdls.Orders.view_orders(current_user.Cus_Id)
-    if cf.validate_on_submit() and request.method == "POST" and request.form.get("Cancelled-Item"):
-        mdls.Orders.cancel_orders(request.form.get("Cancelled-Item"))
+    if cf.validate_on_submit() and request.form.get("Cancelled-Item"):
+        print(request.form.get("Cancelled-Item"))
+        mdls.Orders.cancel_orders([request.form.get("Cancelled-Item")])
         data = mdls.Orders.view_orders(current_user.Cus_Id)
     return render_template("view_all.html", active_item="View", items=data, cancel_form=cf)
 
@@ -148,7 +150,11 @@ def query_items(items: str):
         "STALL": mdls.Stall.retrieve_info2,
         "ORDER": mdls.Orders.view_stall_orders,
         "TRACK": mdls.Track.QUERY,
-        "TRACK_QUERY": mdls.Track.QUERY_BOX
+        "TRACK_QUERY": mdls.Track.QUERY_BOX,
+        "REGISTER_NAME": mdls.Stall.validate_account_name,
+        "BOX_ORDER_QUERY": mdls.Track.BOX_ORDER,
+        "STALL_BOX_QUERY": mdls.Track.STORE_BOX,
+        "CUSTOMER_ORDERS": mdls.Orders.view_orders  # VIEW CUSTOMER ORDERS
         }
     
     if dic.get(cmd_data):
@@ -181,13 +187,19 @@ def update_items(items: str):
         mdls.Products.update_food(**dic)
         return "Success"
     elif cmd_data == "UPDATEORDER":
-        mdls.Orders.update_order(*data)
+        mdls.Orders.update_order(data[:-1], data[-1])
         return "Success"
     elif cmd_data == "ALLOCATEORDER":
         mdls.Track.ALLOCATE(*data)
         return "Success"
     elif cmd_data == "COLLECTIONORDER":
         mdls.Orders.update_order(data, "COLLECTED")
+        return "Success"
+    elif cmd_data == "UPDATE_ORDER_BOX":
+        mdls.Track.UPDATE_ORDER_BOX(*data)
+        return "Success"
+    elif cmd_data == "TEMPERATURE_UPDATE":
+        mdls.Track.UPDATE_TEMPERATURE(*data)
         return "Success"
     elif cmd_data == "COMPLETETRACKORDER":
         mdls.Track.COMPLETE(*data)
@@ -220,4 +232,4 @@ def log_out_page():
 
 
 if __name__ == '__main__':
-    app.run()
+    app.run(host='0.0.0.0', port=4000)
