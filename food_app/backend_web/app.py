@@ -232,4 +232,9 @@ def log_out_page():
 
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=4000)
+    from random import randint
+    from socket import gethostname, gethostbyname
+    ip_add = gethostbyname(gethostname())
+    # port = randint(4000, 8000) ENABLE IT ONLY IF NOT FOUND
+    # app.run(host='0.0.0.0', port=4000)
+    app.run(host=ip_add, port=4000)
